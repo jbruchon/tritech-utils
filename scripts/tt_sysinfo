@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VER="1.11"
-VERDATE="2013-12-04"
+VER="1.12"
+VERDATE="2013-12-06"
 
 #echo "Tritech system info tool $VER, updated on $VERDATE"
 #echo "Copyright (c) by c02ware and Jody Bruchon"
