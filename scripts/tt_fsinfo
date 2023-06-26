@@ -2,22 +2,22 @@
 
 # Displays info on storage devices in the system
 
-VER=1.13
-VERDATE="2022-08-31"
+VER=1.14
+VERDATE="2023-06-26"
 
 . tss__common
 
 get_device_info () {
-	REM=9; USB=9; DEVSIZE=0; Z=0; DEVSIZE=0
+	REM=9; USB=9; DEVSIZE=0; Z=0; DEVSIZE=0; unset ATTRIBS
 	PTTYPE="MBR"
-	tss_file_tool id /dev/$1 2>/dev/null | grep -q "gpt" && PTTYPE="GPT"
+	[[ "$(tss_file_tool id /dev/$1 2>/dev/null)" =~ "gpt" ]] && PTTYPE="GPT"
 	PTTYPE="${CWHT}[$CBLU$PTTYPE${CWHT}]"
 	# Check if removable and/or USB, or if the drive is an empty card reader
 	# Empty card readers and invalid disk devices have a 9 in the REM/USB type
 	test -e /sys/block/$1/removable && REM="$(tr -d '\n' < /sys/block/$1/removable)"
 	test -z "$REM" && REM=9
 	if [ -e "/sys/block/$1" ]
-		then readlink "/sys/block/$1" | grep -q "/usb" && USB=1 || USB=0
+		then [[ "$(readlink "/sys/block/$1")" =~ "/usb" ]] && USB=1 || USB=0
 		if [ -e /sys/block/$1/size ]
 			then Z=$(cat /sys/block/$1/size)
 			else USB=9; Z=0; DEVSIZE=0; return
@@ -52,15 +52,20 @@ get_device_info () {
 	# Auto-space device size string length
 	LEN=$(echo "$DEVSIZE" | wc -c); LEN=$((8 - LEN))
 	while [ $LEN -gt 0 ]; do DEVSIZE=" $DEVSIZE"; LEN=$((LEN - 1)); done
-	unset LEN MDTYPE
+	unset LEN DEVTYPE DMNAME
 	if [ -e /sys/block/$1/md/level ]
 		then
-		MDTYPE="Linux software $(cat /sys/block/$1/md/level)"
+		DEVTYPE="Linux software $CWHT$(cat /sys/block/$1/md/level)$COFF"
 		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
 	fi
-	unset ATTRIBS
-	echo "$KILL" | grep -q "$1" && ATTRIBS="${CWHT}[Linux RAID slave]$COFF "
-	echo "$MOUNTED" | grep -q "/dev/$1 " && ATTRIBS="$ATTRIBS${CYEL}[Mounted]$COFF "
+	if [ -e /sys/block/$1/dm/name ]
+		then
+		DEVTYPE="Linux DM volume $CWHT\"$(cat /sys/block/$1/dm/name)\"$COFF"
+		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
+	fi
+	[[ "$RAIDS" =~ "$1" ]] && ATTRIBS="${CYEL}[RAID]$COFF "
+	[[ "$DMS" =~ "$1" ]] && ATTRIBS="${CYEL}[DM]$COFF "
+	[[ "$MOUNTED" =~ "/dev/$1 " ]] && ATTRIBS="$ATTRIBS${CYEL}[Mounted]$COFF "
 }
 
 expand_fsid () {
@@ -119,7 +124,7 @@ expand_fsid () {
 	esac
 }
 
-NP=0; NOSMART=0; NORAID=0
+NP=0; NOSMART=0; NORAID=0; NODM=0
 for X in $@
 	do
 	# If "nopart" is passed, only display devices.
@@ -128,6 +133,8 @@ for X in $@
 	test "$X" = "nosmart" && NOSMART=1
 	# Do not display RAID arrays
 	test "$X" = "noraid" && NORAID=1
+	# Do not display device mapper devices
+	test "$X" = "nodm" && NODM=1
 done
 
 
@@ -146,7 +153,7 @@ FD_FIELD=5; FD_MULT=1024
 $FDISK -V 2>/dev/null | grep -q 'util-linux' && FD_FIELD=6 && FD_MULT=512
 
 PART=$(mktemp)
-DRIVES="$(echo /dev/sd? /dev/hd? /dev/mmcblk? /dev/nvme?n? | tr ' ' '\n' | grep -v '?' | sort)"
+DRIVES="$(echo /dev/sd? /dev/hd? /dev/mmcblk? /dev/nvme?n? | tr ' ' '\n' | grep -v '\?' | sort)"
 
 if [ -z "$DRIVES" ]
 	then echo -e "\n${CYEL}No drives were detected on this computer!  ${CWHT}:-($COFF\n"
@@ -159,7 +166,7 @@ for DRIVE in $DRIVES
 	DBN="$(basename $DRIVE)"
 	# Remove drives that have device nodes but the kernel says are bogus
 	test ! -e /sys/block/$DBN && DRIVES="$(echo "$DRIVES" | sed s#$DRIVE##)" && continue
-	if tss_file_tool id $DRIVE 2>/dev/null | grep -qv "gpt"
+	if [[ ! "$(tss_file_tool id $DRIVE 2>/dev/null)" =~ "gpt" ]]
 		then $FDISK -l $DRIVE 2>/dev/null | grep /dev | \
 			grep -v Disk | tr -d \* | tr -d + | \
 			awk '{ print $1"="$'$FD_FIELD'":"$4 }' >> $PART
@@ -184,12 +191,20 @@ for DRIVE in $DRIVES
 	fi
 done
 
-# Load all RAID slaves and prevent their individual display
-KILL="$(echo /sys/block/md*/slaves/* | tr ' ' '\n' | grep -v '\*' | sed 's#.*/##g' | tr '\n' ' ')"
 
-for X in $(echo /dev/md?* | tr ' ' '\n' | grep -v '?' | sed s#/dev/##g | tr '\n' ' ')
+# Load all RAID and DM slaves and prevent their individual display
+RAIDS="$(echo /sys/block/md*/slaves/* | tr ' ' '\n' | grep -v '\*' | sed 's#.*/##g' | tr '\n' ' ')"
+#DMS="$(echo /sys/block/dm*/slaves/* | tr ' ' '\n' | grep -v -e '\*' -e '/slaves/md' | sed 's#.*/##g' | tr '\n' ' ')"
+DMS="$(echo /sys/block/dm*/slaves/* | tr ' ' '\n' | grep -v -e '\*' | sed 's#.*/##g' | tr '\n' ' ')"
+
+# Load RAID and DM device info
+for X in $(echo /dev/md?* | tr ' ' '\n' | grep -v '\?' | sed s#/dev/##g | tr '\n' ' ')
 	do [ -e /sys/block/$X ] && [ "$(cat /sys/block/$X/size)" != "0" ] && RAID="$RAID $X"
 done
+for X in $(echo /dev/dm-* | tr ' ' '\n' | grep -v -e '\?' -e '/control$' | sed s#/dev/##g | tr '\n' ' ')
+	do [ -e /sys/block/$X ] && [ "$(cat /sys/block/$X/size)" != "0" ] && DM="$DM $X"
+done
+
 
 MOUNTED="$(cut -d" " -f1 < /proc/mounts | grep '^/' | sort | uniq | tr \\n ' ') "
 ROOTMT="$(mountpoint -d /)"
@@ -249,9 +264,10 @@ for DRV in $DRIVES
 			DEVICE=$(echo "$X" | sed 's/=.*//g')
 			FSID=$(echo "$X" | sed 's/^.*=//;s/\..*//;s/:.*//' | tr '[:upper:]' '[:lower:]')
 			expand_fsid "$FSID"
-			echo "$MOUNTED" | grep -q "$DEVICE " && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
+			[[ "$MOUNTED" =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
 			[[ "$FSID" = "7" || "$FSID" = "0700" ]] && [ $(tss_file_tool id $DEVICE) = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
-			echo "$KILL" | grep -q "$(basename $DEVICE)" || echo "  $CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
+			DEVBN="$(basename $DEVICE)"
+			[[ "$RAIDS" =~ "$DEVBN" || "$DMS" =~ "$DEVBN" ]] || echo "  $CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
 		done
 	fi
 done
@@ -263,7 +279,19 @@ if [ "$NORAID" = "0" ]
 		do
 		get_device_info $DRV
 		[ "$Z" = "0" ] && continue
-		echo "$CCYA$DRV: $CRED$MDTYPE $CGRN($DEVSIZE)  $CWHT$ATTRIBS$COFF"
+		echo "$CCYA$DRV: $CRED$DEVTYPE $CGRN($DEVSIZE)  $CWHT$ATTRIBS$COFF"
+		echo "  $CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
+	done
+fi
+
+if [ "$NODM" = "0" ]
+	then
+	test ! -z "$DM" && echo
+	for DRV in $DM
+		do
+		get_device_info $DRV
+		[ "$Z" = "0" ] && continue
+		echo "$CCYA$DRV: $CRED$DEVTYPE $CGRN($DEVSIZE)  $CWHT$ATTRIBS$COFF"
 		echo "  $CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
 	done
 fi
