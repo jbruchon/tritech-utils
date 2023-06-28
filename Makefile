@@ -18,15 +18,20 @@ ver=$(shell grep TRITECH_UTILS_VER version.h | sed 's/.* "\([^"]*\)"/\1/')
 libc_arch=$(shell test -e /lib/libc.so.0 && echo -n "uclibc-")
 arch=$(shell echo -n "$(libc_arch)"; uname -m | sed 's/_/-/g;s/i[34567]86/i386/')
 
-OBJS=ac_monitor.o format_device_entry.o raid0merge.o \
-     read_inf_section.o suggest_decompressor.o tss_file_tool.o tt_beacon.o
+OBJS += ac_monitor.o format_device_entry.o raid0merge.o 
+OBJS += read_inf_section.o suggest_decompressor.o tss_file_tool.o tt_beacon.o
+
+PROGS += ac_monitor format_device_entry raid0merge read_inf_section suggest_decompressor tss_file_tool tt_beacon
 
 .c.o:
 	$(CC) -c $(BUILD_CFLAGS) $(CFLAGS) $<
 
 all: tritech-utils manual test
 
-tritech-utils: $(OBJS) ac_monitor format_device_entry raid0merge read_inf_section suggest_decompressor tss_file_tool tt_beacon
+tritech-utils: $(OBJS) $(PROGS)
+
+stripped: tritech-utils
+	strip --strip-unneeded $(PROGS)
 
 manual:
 	gzip -9 < ac_monitor.1 > ac_monitor.1.gz
