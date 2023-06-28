@@ -65,9 +65,9 @@ get_device_info () {
 		DEVTYPE="$(cat /sys/block/$1/dm/name)"
 		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
 	fi
-	[[ "$RAIDS" =~ "$1" ]] && ATTRIBS="${CYEL}[RAID]$COFF "
-	[[ "$DMS" =~ "$1" ]] && ATTRIBS="${CYEL}[DM]$COFF "
-	[[ "$MOUNTED" =~ "/dev/$1 " ]] && ATTRIBS="$ATTRIBS${CYEL}[Mounted]$COFF "
+	[[ $RAIDS =~ "$1" ]] && ATTRIBS="${CYEL}[RAID]$COFF "
+	[[ $DMS =~ "$1" ]] && ATTRIBS="${CYEL}[DM]$COFF "
+	[[ $MOUNTED =~ "/dev/$1 " ]] && ATTRIBS="$ATTRIBS${CYEL}[Mounted]$COFF "
 }
 
 expand_fsid () {
@@ -268,10 +268,10 @@ for DRV in $DRIVES
 			DEVICE=$(echo "$X" | sed 's/=.*//g')
 			FSID=$(echo "$X" | sed 's/^.*=//;s/\..*//;s/:.*//' | tr '[:upper:]' '[:lower:]')
 			expand_fsid "$FSID"
-			[[ "$MOUNTED" =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
-			[[ "$FSID" = "7" || "$FSID" = "0700" ]] && [ $(tss_file_tool id $DEVICE) = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
+			[[ $MOUNTED =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
+			[[ $FSID = "7" || $FSID = "0700" ]] && [ $(tss_file_tool id $DEVICE) = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
 			DEVBN="$(basename $DEVICE)"
-			[[ "$RAIDS" =~ "$DEVBN" || "$DMS" =~ "$DEVBN" ]] || echo "  $CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
+			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "  $CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
 		done
 	fi
 done
