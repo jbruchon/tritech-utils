@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VER="1.3"
-VERDATE="2023-06-26"
+VER="1.3.1"
+VERDATE="2023-06-28"
 
 # Finds all possible hard drives on the system, provides info on each,
 # and prompts which one to use. Aborts if no drives exist or if the
@@ -63,7 +63,7 @@ fi
 
 if [ "$USEDEFAULT" != "1" ]
 	then
-	tt_fsinfo nopart nosmart noraid
+	tt_fsinfo nover nopart nosmart nomembers
 	echo -n "Enter the target device (${PREF}): "
 	read DEV
 	else unset DEV
