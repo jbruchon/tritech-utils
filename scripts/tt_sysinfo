@@ -94,7 +94,7 @@ fi
 
 
 # Show detailed hard drive informations
-SPACER="   " tt_fsinfo
+SPACER="   " tt_fsinfo nover
 
 # If TSS client available, try to display TSS record for system.
 if [[ "$TSS_CLIENT" = "1" && ! -z "$PCID" ]]
