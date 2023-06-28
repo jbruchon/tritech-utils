@@ -3,7 +3,7 @@
 # Displays info on storage devices in the system
 
 VER=1.14
-VERDATE="2023-06-26"
+VERDATE="2023-06-28"
 
 . tss__common
 
@@ -52,15 +52,17 @@ get_device_info () {
 	# Auto-space device size string length
 	LEN=$(echo "$DEVSIZE" | wc -c); LEN=$((8 - LEN))
 	while [ $LEN -gt 0 ]; do DEVSIZE=" $DEVSIZE"; LEN=$((LEN - 1)); done
-	unset LEN DEVTYPE DMNAME
+	unset LEN DEVCLASS DEVTYPE MEMBERS
 	if [ -e /sys/block/$1/md/level ]
 		then
-		DEVTYPE="Linux software $CWHT$(cat /sys/block/$1/md/level)$COFF"
+		DEVCLASS="Linux MD RAID"
+		DEVTYPE="$(cat /sys/block/$1/md/level)"
 		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
 	fi
 	if [ -e /sys/block/$1/dm/name ]
 		then
-		DEVTYPE="Linux DM volume $CWHT\"$(cat /sys/block/$1/dm/name)\"$COFF"
+		DEVCLASS="Linux DM volume"
+		DEVTYPE="$(cat /sys/block/$1/dm/name)"
 		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
 	fi
 	[[ "$RAIDS" =~ "$1" ]] && ATTRIBS="${CYEL}[RAID]$COFF "
@@ -124,23 +126,25 @@ expand_fsid () {
 	esac
 }
 
-NP=0; NOSMART=0; NORAID=0; NODM=0
+NV=0; NP=0; NOSMART=0; NORAID=0; NODM=0; NOMEMBERS=0
 for X in $@
 	do
-	# If "nopart" is passed, only display devices.
+	# Do not display version
+	test "$X" = "nover" && NV=1
+	# Do not display partitions
 	test "$X" = "nopart" && NP=1
-	# Allow display without SMART data
+	# Do not display SMART data
 	test "$X" = "nosmart" && NOSMART=1
 	# Do not display RAID arrays
 	test "$X" = "noraid" && NORAID=1
 	# Do not display device mapper devices
 	test "$X" = "nodm" && NODM=1
+	# Do not display device members
+	test "$X" = "nomembers" && NOMEMBERS=1
 done
 
 
-if [ "$NP" = "0" ]
-	then echo "${CWHT}Tritech filesystem info tool $CCYA$VER $CPUR($VERDATE)$COFF"
-fi
+[ "$NV" = "0" ] && echo "${CWHT}Tritech filesystem info tool $CCYA$VER $CPUR($VERDATE)$COFF"
 
 # Detect fdisk binary location
 if [ -e /sbin/fdisk ]; then FDISK=/sbin/fdisk; fi
@@ -230,17 +234,17 @@ for DRV in $DRIVES
 	if [ "$DEVSIZE" != "0 MB" ]
 		then unset DSN2
 		test -n "$DSN" && DSN2=" $COFF($DSN) "
-		echo -en "$CPUR$X: $CGRN$DEVSIZE  $CWHT$PTTYPE  $CRED$TYPE $CCYA$MODEL$DSN2 $CWHT$ATTRIBS$COFF"
+		echo -en "$CPUR$X: $SPACER$CGRN$DEVSIZE  $CWHT$PTTYPE  $CRED$TYPE $CCYA$MODEL$DSN2 $CWHT$ATTRIBS$COFF"
 		if [[ "$NP" = "0" && "$NPT" = "1" && "$NPD" = "0" ]]
 			then echo -n " (no partitions)"; NPD=1
 			# For non-partitioned devices, try to show a filesystem ID if possible
-			echo -en "\n$CWHT +-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
+			echo -en "\n  $SPACER$CWHT+-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
 		fi
 		echo
 		if [ "$NOSMART" != "1" ]
 			then
 			tt__hdd_smart_status $X -q
-			test -n "$S" && echo "$CWHT==== ${CYEL}SMART: $S"
+			test -n "$S" && echo "      $SPACER${CYEL}=== SMART: $S"
 		fi
 		else ZERO="$ZERO $X"
 	fi
@@ -279,8 +283,8 @@ if [ "$NORAID" = "0" ]
 		do
 		get_device_info $DRV
 		[ "$Z" = "0" ] && continue
-		echo "$CCYA$DRV: $CRED$DEVTYPE $CGRN($DEVSIZE)  $CWHT$ATTRIBS$COFF"
-		echo "  $CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
+		echo "${CCYA}MDD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CPUR$DEVTYPE $CWHT\"$DRV\"  $CWHT$ATTRIBS$COFF"
+		[ "$NOMEMBERS" = "0" ] && echo "      $SPACER$CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
 	done
 fi
 
@@ -291,14 +295,12 @@ if [ "$NODM" = "0" ]
 		do
 		get_device_info $DRV
 		[ "$Z" = "0" ] && continue
-		echo "$CCYA$DRV: $CRED$DEVTYPE $CGRN($DEVSIZE)  $CWHT$ATTRIBS$COFF"
-		echo "  $CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
+		echo "${CCYA}DMD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CWHT\"$DEVTYPE\" ($DRV)  $CWHT$ATTRIBS$COFF"
+		[ "$NOMEMBERS" = "0" ] && echo "      $SPACER$CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
 	done
 fi
 
-if [ ! -z "$ZERO" ]
-	then echo -e "\n${CCYA}Empty devices: $CYEL$ZERO$COFF"
-fi
+[ ! -z "$ZERO" ] && echo -e "\n${CCYA}DRV: $SPACEREmpty devices: $CYEL$ZERO$COFF"
 
 echo -en "$COFF"
 rm -f $PART
