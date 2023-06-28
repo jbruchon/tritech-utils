@@ -112,7 +112,7 @@ install: tritech-utils manual
 	mkdir -p $(DESTDIR)/$(datarootdir)/tritech-utils
 	cp -a win_svc_templates $(DESTDIR)/$(datarootdir)/tritech-utils/
 
-package: tritech-utils manual test
+package: tritech-utils stripped manual test
 	-test ! "$(arch)" = "x86-64" && echo "ARCH $(arch) != x86-64, aborting" && exit
 	-test -d $(CURDIR)/pkg && rm -rf $(CURDIR)/pkg
 	mkdir $(CURDIR)/pkg
