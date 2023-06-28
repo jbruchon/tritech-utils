@@ -12,10 +12,6 @@ test "$1" = "-c" && unset TSSC_AUTO
 
 echo "${CWHT}Tritech system information tool $CCYA$VER $CPUR($VERDATE)$COFF"
 
-# Verbosity level
-SIV=0
-test "$1" = "-v" && SIV=1
-
 # Clear (reset) TSS state
 if [ "$1" = "-c" ]
 	then echo "${CYEL}WARNING:$CWHT clearing TSS state$COFF"
@@ -40,7 +36,7 @@ test "$MEMT" -gt 1023 && echo "${CPUR}RAM:     $CWHT${MEMG}.${MEML}$COFF GB"
 
 # Get video adapter information
 unset VGA
-if test $SIV -gt 0 && lspci --version >/dev/null 2>&1
+if lspci --version >/dev/null 2>&1
 	then VGA="$(lspci -mm | grep "VGA compatible" | cut -d\" -f6 | sed 's/^ *//' | head -n 1)"
 	echo "${CPUR}VGA:     $VGA$COFF"
 fi
@@ -48,7 +44,7 @@ fi
 
 # Get detailed BIOS information
 unset BIOS BIOS2 BIOS3
-if test $SIV -gt 0 && dmidecode -V >/dev/null 2>&1
+if dmidecode -V >/dev/null 2>&1
 	then for X in "Manufacturer:" "Product Name:"
 		do BIOS="$BIOS $(dmidecode -t baseboard 2>/dev/null | grep -m 1 "$X" | cut -d: -f2)"
 	done
@@ -89,7 +85,7 @@ fi
 if [ "$TSS_CLIENT" = "1" ]
 	then
 	[ -z "$OS" ] && get_os_version
-	echo "${CCYA}OS:      $CWHT$OS$COFF"
+	[ ! -z "$OS" ] && echo "${CCYA}OS:      $CWHT$OS$COFF"
 fi
 
 
