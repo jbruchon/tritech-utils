@@ -2,8 +2,8 @@
 
 # Tool that presents a summary of basic system information/specs
 
-VER="1.19"
-VERDATE="2020-10-22"
+VER="1.20"
+VERDATE="2023-06-28"
 
 test "$1" = "-c" && export TSSC_AUTO=0
 . tss__common
@@ -26,8 +26,9 @@ fi
 
 echo "${CCYA}CPU:     $CGRN$(grep "model name" /proc/cpuinfo | sed s/.*:[^A-Za-z0-9]*//g | head -n 1)$COFF ($CBLU$(grep "model name" /proc/cpuinfo | wc -l) cores$COFF)"
 
-tt__read_memory_size
 
+# Get RAM information
+tt__read_memory_size
 MEMG=$(expr $MEMT / 1024)
 MEML=$(expr $MEMT % 1024)
 MEML=$(expr $MEML \* 10)
@@ -36,42 +37,16 @@ MEML=$(expr $MEML \* 5)
 test "$MEMT" -lt 1024 && echo "${CPUR}RAM:     $CWHT$MEMT$COFF MB"
 test "$MEMT" -gt 1023 && echo "${CPUR}RAM:     $CWHT${MEMG}.${MEML}$COFF GB"
 
-# Calculate the stupid bogus marketing GB size of all hard drives
-for X in /sys/block/sd* /sys/block/hd* /sys/block/mmcblk? /sys/block/nvme?n?
-	do if [[ -e "$X/device" && "$(cat $X/size 2>/dev/null)" -gt 0 && "$(cat $X/removable 2>/dev/null)" -eq 0 ]]
-		then
-		Y=$(basename $X)
-		SIZE=$(cat "$X/size" 2>/dev/null)
-		SIZE=$(expr $SIZE \* 512 / 1000000000)
-		SIZETB=$(expr $SIZE / 1000)
-		SIZETB2="$SIZETB.$(expr $(expr $SIZE - $SIZETB \* 1000) / 100)"
-		DN=$(hdparm -I /dev/$Y 2>/dev/null | grep 'Model Number:' | sed 's/[^:]*[^a-zA-Z0-9]*//')
-		DSN=$(hdparm -I /dev/$Y 2>/dev/null | grep 'Serial Number:' | sed 's/[^:]*[^a-zA-Z0-9]*//')
-		test -z "$DN" && test -e "$X/device/model" && DN="$(cat $X/device/model)"
-		test -z "$DN" && test -e "$X/device/name" && DN="$(cat $X/device/name)"
-		test -z "$DSN" && test -e "$X/device/serial" && DSN="$(cat $X/device/serial)"
-		test -z "$DN" && DN="unknown"
-		test -z "$DSN" && DSN="unknown"
-		DN=$(echo "$DN" | sed 's/\s*$//g')
-		DSN=$(echo "$DSN" | sed 's/\s*$//g')
-		echo "$X" | grep -q "mmcblk" && DN="$DN eMMC SSD"
-		echo "$X" | grep -q "nvme" && DN="$DN NVMe SSD"
-		echo -n "$CWHT"
-		printf "%-9s" "$Y:"
-		if [ $SIZETB -eq 0 ]
-			then echo "$CPUR$SIZE$COFF GB  (Model $DN, Serial $DSN)"
-			else echo "$CPUR$SIZETB2$COFF TB    (Model $DN, Serial $DSN)"
-		fi
-		tt__hdd_smart_status $Y
-	fi
-done
 
+# Get video adapter information
 unset VGA
 if test $SIV -gt 0 && lspci --version >/dev/null 2>&1
 	then VGA="$(lspci -mm | grep "VGA compatible" | cut -d\" -f6 | sed 's/^ *//' | head -n 1)"
 	echo "${CPUR}VGA:     $VGA$COFF"
 fi
 
+
+# Get detailed BIOS information
 unset BIOS BIOS2 BIOS3
 if test $SIV -gt 0 && dmidecode -V >/dev/null 2>&1
 	then for X in "Manufacturer:" "Product Name:"
@@ -110,6 +85,17 @@ if [ -z "$NET" ]
 fi
 
 
+# Get OS version
+if [ "$TSS_CLIENT" = "1" ]
+	then
+	[ -z "$OS" ] && get_os_version
+	echo "${CCYA}OS:      $CWHT$OS$COFF"
+fi
+
+
+# Show detailed hard drive informations
+SPACER="   " tt_fsinfo
+
 # If TSS client available, try to display TSS record for system.
 if [[ "$TSS_CLIENT" = "1" && ! -z "$PCID" ]]
 	then
@@ -134,7 +120,6 @@ if [[ "$TSS_CLIENT" = "1" && ! -z "$PCID" ]]
 	test -z "$DIAGS" && DIAGS="(none) "
 	test -z "$NOTES" && NOTES="(none) "
 	echo "${CBLU}TSS:     ${CCYA}Diags: $CWHT$DIAGS$COFF ${CCYA}Notes: $CWHT$NOTES$COFF"
-	echo "${CBLU}TSS:     ${CCYA}OS:    $CWHT$OS$COFF"
 	if [ -n "$PROBDESC" ]
 		then
 		echo -e "${CBLU}TSS:     ${CCYA}----- Problem Description -----$COFF"

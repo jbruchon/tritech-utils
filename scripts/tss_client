@@ -5,8 +5,8 @@
 # Prevent loading twice
 if [ -z "$TSS_CLIENT" ]; then
 
-TSS_CLIENT_VER=0.9.3
-TSS_CLIENT_VERDATE=2020-08-24
+TSS_CLIENT_VER=1.0
+TSS_CLIENT_VERDATE=2023-06.28
 
 # Without socat we can't do any TSS client stuff
 if ! socat -V >/dev/null 2>/dev/null
@@ -73,7 +73,7 @@ get_os_version () {
 		OSF=0
 		OS="$(tt_winver -a 2>/dev/null || echo "_FAIL_")"
 		# Handle problems with version detection
-		echo "$OS" | grep -q "_FAIL_" && OS="$OS2" && OSF=1
+		[[ "$OS" =~ "_FAIL_" ]] && OS="$OS2" && OSF=1
 		test "$OS" = "Cannot find SOFTWARE hive." && OS="$OS2" && OSF=1
 		test -z "$OS" && OS="$OS2" && OSF=1
 		test "$OS" = "nt...* " && OS="$OS2" && OSF=1
@@ -90,7 +90,6 @@ get_os_version () {
 }
 
 validate_mac () {
-	test "$TSS_CLIENT_DISABLE" = "1" && return 255
 	test $V -gt 1 && echo "${CGRN}validate_mac()$COFF MAC '$MAC'" >&2
 	OLDMAC="$MAC"
 	MAC="$(echo "$MAC" | tr '[:upper:]' '[:lower:]')"
@@ -117,7 +116,6 @@ validate_mac () {
 
 # Merge MAC and MACADDR variables, sorting and removing any duplicates
 merge_mac_and_macaddr () {
-	test "$TSS_CLIENT_DISABLE" = "1" && return 255
 	test $V -gt 1 && echo "${CGRN}merge_mac_and_macaddr()$COFF MAC '$MAC' MACADDR '${MACADDR[@]}'" >&2
 	if ! validate_mac
 		then echo "${CRED}merge_mac_and_macaddr:$COFF validate_mac failed" >&2
@@ -143,7 +141,7 @@ expand_actions () {
 	for X in $SAN_TYPES
 		do
 		test -z "${!X}" && export $X=0
-		echo "$ACTIONS" | grep -q "$X" && export $X=1
+		[[ "$ACTIONS" =~ "$X" ]] && export $X=1
 	done
 	save_tss_state
 }
@@ -381,7 +379,6 @@ detect_tss_server () {
 
 # Gather information about the current system, setting the corresponding variables to suit
 read_sysinfo () {
-	test "$TSS_CLIENT_DISABLE" = "1" && return 255
 	test $V -gt 1 && echo "${CGRN}read_sysinfo()$COFF" >&2
 	CPU="$(grep "model name" /proc/cpuinfo | sed 's/[^:]*:[^A-Za-z]*//g;s/  */ /g' | head -n 1)"
 	CORES="$(grep "model name" /proc/cpuinfo | wc -l)"
@@ -408,8 +405,8 @@ read_sysinfo () {
 			test -z "$DSN" && DSN="unknown"
 			DMN="$(echo "$DMN" | sed 's/\s*$//g')"
 			DSN="$(echo "$DSN" | sed 's/\s*$//g')"
-			echo "$X" | grep -q mmcblk && DMN="$DMN eMMC SSD"
-			echo "$X" | grep -q nvme && DMN="$DMN NVMe SSD"
+			[[ "$X" =~ "mmcblk" ]] && DMN="$DMN eMMC SSD"
+			[[ "$X" =~ "nvme" ]] && DMN="$DMN NVMe SSD"
 			if [ "$SIZETB" -eq 0 ]
 				then HDD="$HDD${SIZE}GB ($DMN/$DSN), "
 				else HDD="$HDD${SIZETB}TB ($DMN/$DSN), "
