@@ -24,6 +24,12 @@ if [ "$(./tss_file_tool id test/fvefs)" = "fvefs" ]
 	else echo "broken" && ERR=1
 fi
 
+echo -n "tss_file_tool LUKS:      "
+if [ "$(./tss_file_tool id test/luks)" = "luks" ]
+	then echo "OK"
+	else echo "broken" && ERR=1
+fi
+
 echo -n "tss_file_tool HFS+:      "
 if [ "$(./tss_file_tool id test/hfsplus)" = "hfsplus" ]
 	then echo "OK"

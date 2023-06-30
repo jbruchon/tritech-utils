@@ -17,7 +17,8 @@
 #define CHECK_IF_HFSPLUS(a) !strncmp((char *)(a + 1032), "HFSJ", 4)
 #define CHECK_IF_EXFAT(a)   !strncmp((char *)(a + 3), "EXFAT   ", 8)
 #define CHECK_IF_FVEFS(a)   !strncmp((char *)(a + 3), "-FVE-FS-", 8)
-#define CHECK_IF_REG(a)     !strncmp((char *)buffer, "regf", 4)
+#define CHECK_IF_LUKS(a)   !strncmp((char *)a, "LUKS", 4)
+#define CHECK_IF_REG(a)     !strncmp((char *)a, "regf", 4)
 
 static inline int change_ntfs_geometry(FILE *fp, uint8_t * const restrict bp, const uint8_t heads)
 {
@@ -49,13 +50,14 @@ int main(const int argc, const char **argv)
 	}
 
 	if (!strcmp(argv[1], "id")) {
-		if (buffer[450] == 0xEE) { printf("gpt\n"); goto finished; }
-		if (CHECK_IF_NTFS(buffer)) { printf("ntfs\n"); goto finished; }
 		if (CHECK_IF_FVEFS(buffer)) { printf("fvefs\n"); goto finished; }
-		if (buffer[0] == 0x4D && buffer[1] == 0x5A) { printf("winexec\n"); goto finished; }
+		if (CHECK_IF_LUKS(buffer)) { printf("luks\n"); goto finished; }
+		if (CHECK_IF_NTFS(buffer)) { printf("ntfs\n"); goto finished; }
 		if (CHECK_IF_REG(buffer)) { printf("registry\n"); goto finished; }
 		if (CHECK_IF_HFSPLUS(buffer)) { printf("hfsplus\n"); goto finished; }
 		if (CHECK_IF_EXFAT(buffer)) { printf("exfat\n"); goto finished; }
+		if (buffer[450] == 0xEE) { printf("gpt\n"); goto finished; }
+		if (buffer[0] == 0x4D && buffer[1] == 0x5A) { printf("winexec\n"); goto finished; }
 		/* Fall through */
 		printf("unknown\n");
 		goto finished;
