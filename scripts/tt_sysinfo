@@ -85,7 +85,7 @@ fi
 if [ "$TSS_CLIENT" = "1" ]
 	then
 	[ -z "$OS" ] && get_os_version
-	[ ! -z "$OS" ] && echo "${CCYA}OS:      $CWHT$OS$COFF"
+	[ ! -z "$OS" ] && echo "${CYEL}OS:      $CWHT$OS$COFF"
 fi
 
 

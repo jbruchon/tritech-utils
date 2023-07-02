@@ -234,11 +234,11 @@ for DRV in $DRIVES
 	if [ "$DEVSIZE" != "0 MB" ]
 		then unset DSN2
 		test -n "$DSN" && DSN2=" $COFF($DSN) "
-		echo -en "$CPUR$X: $SPACER$CGRN$DEVSIZE  $CWHT$PTTYPE  $CRED$TYPE $CCYA$MODEL$DSN2 $CWHT$ATTRIBS$COFF"
+		echo -en "${CCYA}DRV:  $SPACER${CWHT}$X $CGRN$DEVSIZE  $CWHT$PTTYPE  $CRED$TYPE $CCYA$MODEL$DSN2 $CWHT$ATTRIBS$COFF"
 		if [[ "$NP" = "0" && "$NPT" = "1" && "$NPD" = "0" ]]
 			then echo -n " (no partitions)"; NPD=1
 			# For non-partitioned devices, try to show a filesystem ID if possible
-			echo -en "\n  $SPACER$CWHT+-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
+			echo -en "\n      $SPACER$CWHT+-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
 		fi
 		echo
 		if [ "$NOSMART" != "1" ]
@@ -271,7 +271,7 @@ for DRV in $DRIVES
 			[[ $MOUNTED =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
 			[[ $FSID = "7" || $FSID = "0700" ]] && [ $(tss_file_tool id $DEVICE) = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
 			DEVBN="$(basename $DEVICE)"
-			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "  $CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
+			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "      $SPACER$CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
 		done
 	fi
 done
