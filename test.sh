@@ -54,6 +54,12 @@ if [ "$(./tss_file_tool id test/exfat)" = "exfat" ]
 	else echo "broken" && ERR=1
 fi
 
+echo -n "tss_file_tool apfs:      "
+if [ "$(./tss_file_tool id test/apfs)" = "apfs" ]
+	then echo "OK"
+	else echo "broken" && ERR=1
+fi
+
 echo -n "tss_file_tool ntfsgeom:  "
 cp test/ntfs test/ntfs_test
 ./tss_file_tool ntfsgeom test/ntfs_test 66 2>&1 >/dev/null

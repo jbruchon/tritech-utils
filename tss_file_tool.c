@@ -14,9 +14,10 @@
 #include "version.h"
 
 #define CHECK_IF_NTFS(a)    !strncmp((char *)(a + 3), "NTFS", 4)
-#define CHECK_IF_HFSPLUS(a) !strncmp((char *)(a + 1032), "HFSJ", 4)
 #define CHECK_IF_EXFAT(a)   !strncmp((char *)(a + 3), "EXFAT   ", 8)
 #define CHECK_IF_FVEFS(a)   !strncmp((char *)(a + 3), "-FVE-FS-", 8)
+#define CHECK_IF_HFSPLUS(a) !strncmp((char *)(a + 1032), "HFSJ", 4)
+#define CHECK_IF_APFS(a) !strncmp((char *)(a + 32), "NXSB", 4)
 #define CHECK_IF_LUKS(a)   !strncmp((char *)a, "LUKS", 4)
 #define CHECK_IF_REG(a)     !strncmp((char *)a, "regf", 4)
 
@@ -55,6 +56,7 @@ int main(const int argc, const char **argv)
 		if (CHECK_IF_NTFS(buffer)) { printf("ntfs\n"); goto finished; }
 		if (CHECK_IF_REG(buffer)) { printf("registry\n"); goto finished; }
 		if (CHECK_IF_HFSPLUS(buffer)) { printf("hfsplus\n"); goto finished; }
+		if (CHECK_IF_APFS(buffer)) { printf("apfs\n"); goto finished; }
 		if (CHECK_IF_EXFAT(buffer)) { printf("exfat\n"); goto finished; }
 		if (buffer[450] == 0xEE) { printf("gpt\n"); goto finished; }
 		if (buffer[0] == 0x4D && buffer[1] == 0x5A) { printf("winexec\n"); goto finished; }
@@ -95,7 +97,7 @@ usage:
 	fprintf(stderr, "Usage: %s command dev/device|/path/to/file [hex-head-count]\n\n", argv[0]);
 	fprintf(stderr, "Commands:\n");
 	fprintf(stderr, "id          Identifies the filesystem or format of the target\n");
-	fprintf(stderr, "            Recognizes: gpt ntfs fvefs winexec registry hfsplus exfat\n");
+	fprintf(stderr, "            Recognizes: gpt ntfs fvefs winexec registry hfsplus exfat apfs\n");
 	fprintf(stderr, "ntfsgeom    Change NTFS partition head count; requires two-digit hex head count\n");
 	return EXIT_FAILURE;
 }

@@ -2,8 +2,8 @@
 
 # Displays info on storage devices in the system
 
-VER=1.14
-VERDATE="2023-06-28"
+VER=1.15
+VERDATE="2023-07-15"
 
 . tss__common
 
@@ -125,6 +125,20 @@ expand_fsid () {
 		*)    FS="Unknown     " ;;
 	esac
 }
+
+
+probed_fsid () {
+	case $1 in
+		#--------MBR types--------
+		fvefs)  PFS="BitLocker   " ;;
+		apfs)   PFS="APFS        " ;;
+		exfat)  PFS="ExFAT       " ;;
+		luks)   PFS="LUKS        " ;;
+		ntfs)   PFS="NTFS        " ;;
+		*)      PFS="" ;;
+	esac
+}
+
 
 NV=0; NP=0; NOSMART=0; NORAID=0; NODM=0; NOMEMBERS=0
 for X in $@
@@ -267,9 +281,13 @@ for DRV in $DRIVES
 			unset LEN
 			DEVICE=$(echo "$X" | sed 's/=.*//g')
 			FSID=$(echo "$X" | sed 's/^.*=//;s/\..*//;s/:.*//' | tr '[:upper:]' '[:lower:]')
+			unset FS PFS
+			FSTOOLID="$(tss_file_tool id $DEVICE)"
+			probed_fsid "$FSTOOLID"
 			expand_fsid "$FSID"
+			[ ! -z "$PFS" ] && FS="$PFS"
 			[[ $MOUNTED =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
-			[[ $FSID = "7" || $FSID = "0700" ]] && [ $(tss_file_tool id $DEVICE) = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
+			[[ $FSID = "7" || $FSID = "0700" ]] && [ "$FSTOOLID" = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
 			DEVBN="$(basename $DEVICE)"
 			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "      $SPACER$CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
 		done
