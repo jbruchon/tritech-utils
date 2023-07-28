@@ -2,8 +2,8 @@
 
 # Displays info on storage devices in the system
 
-VER=1.15
-VERDATE="2023-07-15"
+VER=1.16
+VERDATE="2023-07-26"
 
 . tss__common
 
@@ -25,10 +25,14 @@ get_device_info () {
 		DEVSIZE=$(expr $Z / 2 \* 1024 / 1000000000)
 		else USB=9; Z=0; DEVSIZE=0; return
 	fi
-	if [[ $Z -gt 0 && -e /sys/block/$1/device/model ]]
-		then MODEL=$(cat /sys/block/$1/device/model)
+	MODEL="(No model)"
+	DSN="(No serial)"
+	if [ $Z -gt 0 ]
+		then
+		MODELX=$(cat /sys/block/$1/device/model 2>/dev/null | sed 's/^\s\s*//;s/\s\s*$//')
+		[ -z "$MODELX" ] && MODELX=$(hdparm -I /dev/$1 2>/dev/null | grep 'Model Number:' | sed 's/[^:]*[^a-zA-Z0-9]*//;s/ *$//g')
+		[ ! -z "$MODELX" ] && MODEL="$MODELX"
 		DSN=$(hdparm -I /dev/$1 2>/dev/null | grep 'Serial Number:' | sed 's/[^:]*[^a-zA-Z0-9]*//;s/ *$//g')
-		else MODEL="(No model)"
 	fi
 	if [ "$DEVSIZE" -lt "9" ]
 		then DEVSIZE="$(expr $Z / 2 \* 1024 / 1000000) MB"
@@ -65,9 +69,10 @@ get_device_info () {
 		DEVTYPE="$(cat /sys/block/$1/dm/name)"
 		MEMBERS="$(echo /sys/block/$1/slaves/* | sed "s#/sys/block/$1/slaves/##g")"
 	fi
-	[[ $RAIDS =~ "$1" ]] && ATTRIBS="${CYEL}[RAID]$COFF "
-	[[ $DMS =~ "$1" ]] && ATTRIBS="${CYEL}[DM]$COFF "
-	[[ $MOUNTED =~ "/dev/$1 " ]] && ATTRIBS="$ATTRIBS${CYEL}[Mounted]$COFF "
+	[ $NPT = 1 ] && ATTRIBS="[NO_PARTS]"
+	[[ $RAIDS =~ "$1" ]] && ATTRIBS="[RAID]"
+	[[ $DMS =~ "$1" ]] && ATTRIBS="[DM]"
+	[[ $MOUNTED =~ "/dev/$1 " ]] && ATTRIBS="${ATTRIBS} [Mounted]"
 }
 
 expand_fsid () {
@@ -248,9 +253,16 @@ for DRV in $DRIVES
 	if [ "$DEVSIZE" != "0 MB" ]
 		then unset DSN2
 		test -n "$DSN" && DSN2=" $COFF($DSN) "
-		echo -en "${CCYA}DRV:  $SPACER${CWHT}$X $CGRN$DEVSIZE  $CWHT$PTTYPE  $CRED$TYPE $CCYA$MODEL$DSN2 $CWHT$ATTRIBS$COFF"
+		echo -n "${CCYA}DRV:  $SPACER$CWHT"
+		printf "%-7s" "$X "
+		echo -n "$CGRN"; printf "%-9s" "$DEVSIZE "
+		echo -n "$CWHT$PTTYPE  "
+		echo -n "$CRED"; printf "%-9s" "$TYPE "
+		echo -n "$CCYA"; printf "%-22s" "$MODEL "
+		echo -n "$CCYA"; printf "%-24s" "$DSN2 "
+		echo -n "$CYEL$ATTRIBS$COFF"
 		if [[ "$NP" = "0" && "$NPT" = "1" && "$NPD" = "0" ]]
-			then echo -n " (no partitions)"; NPD=1
+			then NPD=1
 			# For non-partitioned devices, try to show a filesystem ID if possible
 			echo -en "\n      $SPACER$CWHT+-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
 		fi
@@ -286,10 +298,10 @@ for DRV in $DRIVES
 			probed_fsid "$FSTOOLID"
 			expand_fsid "$FSID"
 			[ ! -z "$PFS" ] && FS="$PFS"
-			[[ $MOUNTED =~ "$DEVICE " ]] && PARTATTR="$PARTATTR${CYEL}[Mounted]$COFF "
-			[[ $FSID = "7" || $FSID = "0700" ]] && [ "$FSTOOLID" = "fvefs" ] && PARTATTR="$PARTATTR$CWHT${BGRED}[Encrypted]$COFF "
+			[[ $MOUNTED =~ "$DEVICE " ]] && PARTATTR="$PARTATTR [Mounted]"
+			[[ $FSID = "7" || $FSID = "0700" ]] && [ "$FSTOOLID" = "fvefs" ] && PARTATTR="$PARTATTR $CWHT${BGRED}[Encrypted]"
 			DEVBN="$(basename $DEVICE)"
-			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "      $SPACER$CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $PARTATTR"
+			[[ $RAIDS =~ "$DEVBN" || $DMS =~ "$DEVBN" ]] || echo "      $SPACER$CWHT+-- $CPUR$DEVICE  $CGRN$SIZE  $CWHT$FS  $CYEL$PARTATTR$COFF"
 		done
 	fi
 done
@@ -301,7 +313,7 @@ if [ "$NORAID" = "0" ]
 		do
 		get_device_info $DRV
 		[ "$Z" = "0" ] && continue
-		echo "${CCYA}MDD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CPUR$DEVTYPE $CWHT\"$DRV\"  $CWHT$ATTRIBS$COFF"
+		echo "${CCYA}MDD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CPUR$DEVTYPE $CWHT\"$DRV\"  $CYEL$ATTRIBS$COFF"
 		[ "$NOMEMBERS" = "0" ] && echo "      $SPACER$CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
 	done
 fi
@@ -313,7 +325,7 @@ if [ "$NODM" = "0" ]
 		do
 		get_device_info $DRV
 		[ "$Z" = "0" ] && continue
-		echo "${CCYA}DMD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CWHT\"$DEVTYPE\" ($DRV)  $CWHT$ATTRIBS$COFF"
+		echo "${CCYA}DMD:  $SPACER$CGRN$DEVSIZE  $CRED$DEVCLASS $CWHT\"$DEVTYPE\" ($DRV)  $CYEL$ATTRIBS$COFF"
 		[ "$NOMEMBERS" = "0" ] && echo "      $SPACER$CWHT+-- ${CGRN}Members: $CWHT$MEMBERS$COFF"
 	done
 fi
