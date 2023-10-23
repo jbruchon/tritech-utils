@@ -4,23 +4,35 @@
  * Broadcasts a "beacon" string by UDP at regular intervals
  */
 
+#if defined _WIN32 || defined __MINGW32__
+ #ifndef ON_WINDOWS
+  #define ON_WINDOWS 1
+ #endif
+ #ifndef WIN32_LEAN_AND_MEAN
+  #define WIN32_LEAN_AND_MEAN
+ #endif
+ #include <windows.h>
+ #include <winsock2.h>
+ #include <ws2tcpip.h>
+#else
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <netdb.h>
+#endif /* Win32 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #include "version.h"
 
 int main(int argc, char **argv)
 {
 	int sockfd;
-	int broadcast = 1;
 	int initial = 2;
 	char *address;
 	unsigned int port;
@@ -30,11 +42,18 @@ int main(int argc, char **argv)
 		struct sockaddr sa;
 		struct sockaddr_in sa_in;
 	} dest_addr;
+#ifdef ON_WINDOWS
+	WSADATA wsaData;
+	int ws_result;
+	char broadcast = 1;
+#else
+	int broadcast = 1;
+#endif
 
 	fprintf(stderr, "Tritech Service System UDP beacon utility %s (%s)\n", TRITECH_UTILS_VER, TRITECH_UTILS_DATE);
 	if (argc != 5) {
 		fprintf(stderr, "Usage: %s broadcast_addr port interval \"beacon text string\"\n", argv[0]);
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 	address = argv[1];
@@ -42,16 +61,24 @@ int main(int argc, char **argv)
 	interval = atoi(argv[3]);
 	beacon_str = argv[4];
 
+#ifdef ON_WINDOWS
+	ws_result = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if (ws_result != 0) {
+		fprintf(stderr, "WSAStartup failed: %d\n", ws_result);
+		goto fail_exit;
+	}
+#endif
+
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		perror("socket");
-		return EXIT_FAILURE;
+		goto fail_exit;
 	}
 
 	dest_addr.sa_in.sin_family = AF_INET;
 	dest_addr.sa_in.sin_port = htons(port);
 	if (inet_pton(AF_INET, address, &(dest_addr.sa_in.sin_addr)) != 1) {
 		perror("inet_pton");
-		return EXIT_FAILURE;
+		goto fail_exit;
 	}
 
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
@@ -64,7 +91,7 @@ int main(int argc, char **argv)
 			/* Only error out on the first packet sending attempt */
 			if (initial == 2) {
 				perror("sendto");
-				return EXIT_FAILURE;
+				goto fail_exit;
 			}
 			/* Warn user if sending fails (but only once for each set of failures) */
 			if (initial == 0) {
@@ -81,5 +108,11 @@ int main(int argc, char **argv)
 	}
 
 	close(sockfd);
-	return EXIT_SUCCESS;
+	exit(EXIT_SUCCESS);
+
+fail_exit:
+#ifdef ON_WINDOWS
+	WSACleanup();
+#endif
+	exit(EXIT_FAILURE);
 }
