@@ -2,8 +2,8 @@
 
 # Displays info on storage devices in the system
 
-VER=1.16
-VERDATE="2023-07-26"
+VER=1.16.1
+VERDATE="2024-10-30"
 
 . tss__common
 
@@ -176,7 +176,7 @@ FD_FIELD=5; FD_MULT=1024
 $FDISK -V 2>/dev/null | grep -q 'util-linux' && FD_FIELD=6 && FD_MULT=512
 
 PART=$(mktemp)
-DRIVES="$(echo /dev/sd? /dev/hd? /dev/mmcblk? /dev/nvme?n? | tr ' ' '\n' | grep -v '\?' | sort)"
+DRIVES="$(echo /dev/sd? /dev/hd? /dev/mmcblk? /dev/nvme?n? | tr ' ' '\n' | grep -v '\?' | sort -g)"
 
 if [ -z "$DRIVES" ]
 	then echo -e "\n${CYEL}No drives were detected on this computer!  ${CWHT}:-($COFF\n"
@@ -221,10 +221,10 @@ RAIDS="$(echo /sys/block/md*/slaves/* | tr ' ' '\n' | grep -v '\*' | sed 's#.*/#
 DMS="$(echo /sys/block/dm*/slaves/* | tr ' ' '\n' | grep -v -e '\*' | sed 's#.*/##g' | tr '\n' ' ')"
 
 # Load RAID and DM device info
-for X in $(echo /dev/md?* | tr ' ' '\n' | grep -v '\?' | sed s#/dev/##g | tr '\n' ' ')
+for X in $(echo /dev/md?* | tr ' ' '\n' | grep -v '\?' | sed 's#/dev/##g' | tr '\n' ' ')
 	do [ -e /sys/block/$X ] && [ "$(cat /sys/block/$X/size)" != "0" ] && RAID="$RAID $X"
 done
-for X in $(echo /dev/dm-* | tr ' ' '\n' | grep -v -e '\?' -e '/control$' | sed s#/dev/##g | tr '\n' ' ')
+for X in $(echo /dev/dm-* | tr ' ' '\n' | grep -v -e '\?' -e '/control$' | sed 's#/dev/##g' | tr '\n' ' ')
 	do [ -e /sys/block/$X ] && [ "$(cat /sys/block/$X/size)" != "0" ] && DM="$DM $X"
 done
 
@@ -246,9 +246,8 @@ for DRV in $DRIVES
 	test "$(cat /sys/block/$X/size)" = "0" && continue
 	# If no partition 1-4 exists, don't display partitions
 	for C in 1 2 3 4 p1 p2 p3 p4
-		do test -e "/sys/block/$X/$X$C" && NPT=0
+		do test -e "/sys/block/$X/$X$C" && NPT=0 && break
 	done
-	test "$NP" = "1" && NPT=1
 	get_device_info $X
 	if [ "$DEVSIZE" != "0 MB" ]
 		then unset DSN2
@@ -261,7 +260,7 @@ for DRV in $DRIVES
 		echo -n "$CCYA"; printf "%-22s" "$MODEL "
 		echo -n "$CCYA"; printf "%-24s" "$DSN2 "
 		echo -n "$CYEL$ATTRIBS$COFF"
-		if [[ "$NP" = "0" && "$NPT" = "1" && "$NPD" = "0" ]]
+		if [[ $NP -eq 0 && $NPT -eq 1 && $NPD -eq 0 ]]
 			then NPD=1
 			# For non-partitioned devices, try to show a filesystem ID if possible
 			echo -en "\n      $SPACER$CWHT+-- ${CPUR}Non-partitioned with $CWHT$(tss_file_tool id /dev/$X)$CPUR filesystem$COFF"
@@ -275,7 +274,7 @@ for DRV in $DRIVES
 		else ZERO="$ZERO $X"
 	fi
 
-	if [ $NPT -eq 0 ]
+	if [[ $NP -eq 0 && $NPT -eq 0 ]]
 		then for X in $(grep "$DRV" "$PART" | tr \\n " ")
 			do
 			unset PARTATTR
