@@ -16,6 +16,8 @@ export RSYNC_PASSWORD=""
 
 # Use rsync-native mode?
 RSM=1
+[ -z "$RSM_HOST" ] && RSM_HOST=core
+[ -z "$RSM_ROOT" ] && RSM_ROOT=tritech
 test ! "$BASE" = "/mnt/cifs" && RSM=0
 
 IFS0="$IFS"
@@ -249,76 +251,77 @@ echo -n "${CWHT}Please specify backup or restore (b/r): $COFF"
 read -n 1 BR; echo
 
 case $BR in
-
 b|B)
-test "$RSM" = "0" && if [ ! -d $BU ]
-	then
-	mkdir -p $BU || (echo "mkdir $BU failed" && exit 1)
-fi
-cd $MTPT
-
-# If we mounted read-only, don't bother running the cleaner
-if [ "$RO" != "1" ]
-	then
-	echo "${CYEL}Press a key to bypass running tt_cleaner...$COFF"
-	X=0
-	read -t 3 -s -n 1 && echo "${CPUR}Not running tt_cleaner due to user keypress.$COFF" && X=1
-	test $X -eq 0 && echo "Please wait while the cleaner is run." && \
-		tt_cleaner -Q -N | tee -a $LOGFILE
-	unset X
-fi
-
-select_backup_data
-QB=0
-for X in Program\ Files*/Intuit
-	do test -d "$X/" && QB=1
-done
-test "$QB" = "1" && scan_for_quickbooks_data
-test "$IDX" -eq "0" && echo "Nothing to back up!" && exit 1
-
-# Change backup destination if in rsync-native mode
-test "$RSM" = "1" && BU="${RSYNC_USER}@core::tritech/$BACKUPDIR/$WOID"
-
-C=0
-while [ "$C" -lt "$IDX" ]
-	do
-	echo "$CWHT${FILES[$C]}:$COFF"
-	rsync -rtvH --exclude=desktop.ini --exclude=Desktop.ini \
-		"$MTPT/${FILES[$C]}" "$BU/" | \
-		tee -a $LOGFILE | line_rotate || \
-		echo -e "\n${CYEL}rsync encountered errors, check $BU$COFF"
-	echo -e "${CWHT}Finished: $CGRN$MTPT/${FILES[$C]}$CWHT => $CPUR$BU$COFF"
-	C=$((C + 1))
-done
-	if [ "$RSM" = "0" ]
+	test "$RSM" = "0" && if [ ! -d $BU ]
 		then
-		echo "${CGRN}Resetting permissions on backup files.$COFF"
-		chown -R $RSYNC_USER:users $BACKUPROOT/$WOID/ 2>/dev/null
-		chmod -R ug-s $BACKUPROOT/$WOID/ 2>/dev/null
-		chmod -R ug+rwX $BACKUPROOT/$WOID/ 2>/dev/null
-		chmod -R o-rwx $BACKUPROOT/$WOID/ 2>/dev/null
+		mkdir -p $BU || (echo "mkdir $BU failed" && exit 1)
 	fi
-echo -e "${CWHT}Backup complete! Log saved to $LOGFILE$COFF"
-;;
+	cd $MTPT
+
+	# If we mounted read-only, don't bother running the cleaner
+	if [ "$RO" != "1" ]
+		then
+		echo "${CYEL}Press a key to bypass running tt_cleaner...$COFF"
+		X=0
+		read -t 3 -s -n 1 && echo "${CPUR}Not running tt_cleaner due to user keypress.$COFF" && X=1
+		test $X -eq 0 && echo "Please wait while the cleaner is run." && \
+			tt_cleaner -Q -N | tee -a $LOGFILE
+		unset X
+	fi
+
+	select_backup_data
+	QB=0
+	for X in Program\ Files*/Intuit
+		do test -d "$X/" && QB=1
+	done
+	test "$QB" = "1" && scan_for_quickbooks_data
+	test "$IDX" -eq "0" && echo "Nothing to back up!" && exit 1
+
+	# Change backup destination if in rsync-native mode
+	test "$RSM" = "1" && BU="${RSYNC_USER}@${RSM_HOST}::${RSM_ROOT}/$BACKUPDIR/$WOID"
+
+	C=0
+	while [ "$C" -lt "$IDX" ]
+		do
+		echo "$CWHT${FILES[$C]}:$COFF"
+		rsync -rtvH --exclude=desktop.ini --exclude=Desktop.ini \
+			"$MTPT/${FILES[$C]}" "$BU/" | \
+			tee -a $LOGFILE | line_rotate || \
+			echo -e "\n${CYEL}rsync encountered errors, check $BU$COFF"
+		echo -e "${CWHT}Finished: $CGRN$MTPT/${FILES[$C]}$CWHT => $CPUR$BU$COFF"
+		C=$((C + 1))
+	done
+		if [ "$RSM" = "0" ]
+			then
+			echo "${CGRN}Resetting permissions on backup files.$COFF"
+			chown -R $RSYNC_USER:users $BACKUPROOT/$WOID/ 2>/dev/null
+			chmod -R ug-s $BACKUPROOT/$WOID/ 2>/dev/null
+			chmod -R ug+rwX $BACKUPROOT/$WOID/ 2>/dev/null
+			chmod -R o-rwx $BACKUPROOT/$WOID/ 2>/dev/null
+		fi
+	echo -e "${CWHT}Backup complete! Log saved to $LOGFILE$COFF"
+
+	;;
 
 r|R)
-if [ ! -d "$MTPT/Backup" ]
-	then
-	mkdir "$MTPT/Backup" || \
-		(echo "${CRED}mkdir $BU failed$COFF" && exit 1)
-fi
-test ! -d $BU && \
-	(echo "${CRED}$BU does not exist$COFF" && exit 1)
+	if [ ! -d "$MTPT/Backup" ]
+		then
+		mkdir "$MTPT/Backup" || \
+			(echo "${CRED}mkdir $BU failed$COFF" && exit 1)
+	fi
+	test ! -d $BU && \
+		(echo "${CRED}$BU does not exist$COFF" && exit 1)
 
-# Change backup destination if in rsync-native mode
-test "$RSM" = "1" && BU="${RSYNC_USER}@core::tritech/$BACKUPDIR/$WOID"
+	# Change backup destination if in rsync-native mode
+	test "$RSM" = "1" && BU="${RSYNC_USER}@${RSM_HOST}::${RSM_ROOT}/$BACKUPDIR/$WOID"
 
-rsync -rtvH "$BU/" "$MTPT/Backup/" | \
-	tee -a $LOGFILE | line_rotate || \
-	echo -e "\n${CYEL}rsync encountered errors, check $BU$COFF"
-echo -e "${CWHT}Finished: $CGRN$BU$CWHT => $CPUR$MTPT/Backup$COFF"
-echo -e "\n${CWHT}Log saved to $LOGFILE$COFF"
-;;
+	rsync -rtvH "$BU/" "$MTPT/Backup/" | \
+		tee -a $LOGFILE | line_rotate || \
+		echo -e "\n${CYEL}rsync encountered errors, check $BU$COFF"
+	echo -e "${CWHT}Finished: $CGRN$BU$CWHT => $CPUR$MTPT/Backup$COFF"
+	echo -e "\n${CWHT}Log saved to $LOGFILE$COFF"
+
+	;;
 
 esac
 
