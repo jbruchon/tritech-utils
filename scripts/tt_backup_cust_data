@@ -16,8 +16,8 @@ export RSYNC_PASSWORD=""
 
 # Use rsync-native mode?
 RSM=1
-[ -z "$RSM_HOST" ] && RSM_HOST=core
-[ -z "$RSM_ROOT" ] && RSM_ROOT=tritech
+[ -z "$RSM_HOST" ] && RSM_HOST="$TSS_SERVER"
+[ -z "$RSM_ROOT" ] && RSM_ROOT="$TSS_CIFS_SHARE"
 test ! "$BASE" = "/mnt/cifs" && RSM=0
 
 IFS0="$IFS"
