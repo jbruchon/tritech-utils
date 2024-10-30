@@ -793,8 +793,8 @@ NAME="$LOCAL/Steam/htmlcache"; DESC="Steam"; add_to_wipe
 NAME="$LOCAL/Sweetpacks*"; DESC="Sweetpacks"; add_to_wipe
 NAME="$LOCAL/$SAVCELOGS"; DESC="Symantec AV logs"; add_to_wipe
 NAME="$LOCAL/SupportSoft/DellSupportCenter/family/data/*.tmp"; DESC="Dell Support Center"; add_to_delete
+NAME="$LOCAL/TechSmith/SnagIt/CrashDumps"; DESC="SnagIt Crash Dumps"; add_to_wipe
 NAME="$LOCAL/TelevisionFanatic"; DESC="TelevisionFanatic"; add_to_wipe
-
 NAME="$LOCAL/*.tmp"; DESC="Temporary files"; add_to_delete
 NAME="$LOCAL/temp"; DESC="Temporary files"; add_to_wipe
 NAME="$LOCAL/Temp"; DESC="Temporary files"; add_to_wipe
