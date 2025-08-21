@@ -5,8 +5,8 @@
 # Prevent loading twice
 if [ -z "$TSS_CLIENT" ]; then
 
-TSS_CLIENT_VER=1.0
-TSS_CLIENT_VERDATE=2023-06.28
+TSS_CLIENT_VER=1.0.1
+TSS_CLIENT_VERDATE=2025-08-18
 
 # Without socat we can't do any TSS client stuff
 if ! socat -V >/dev/null 2>/dev/null
@@ -41,6 +41,13 @@ MSDM=/sys/firmware/acpi/tables/MSDM
 
 # When this is 1, operations that queue TSS state changes need to be flushed
 TSS_STATE_DIRTY=0
+
+# If we have no IP address, just abort
+if ! ip addr show | grep -q 'inet [0-9].*[^l][^o]$'
+	then
+	test $V -gt 0 && echo "${CRED}Aborting due to no IP address on any network interface$COFF"
+	TSS_CLIENT_DISABLE=1
+fi
 
 ### Begin functions
 
