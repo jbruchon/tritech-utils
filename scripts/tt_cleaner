@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VER="5.10.1"
-VERDATE="2022-09-02"
+VER="5.11"
+VERDATE="2025-08-21"
 
 # Tritech Service System cleaning tool for Linux
 # Copyright (C) by Jody Bruchon <jody@jodybruchon.com>
@@ -700,6 +700,7 @@ NAME="$LOCAL/$MS/Windows/Explorer/thumbcache*.db"; DESC="Explorer thumbnails"; a
 NAME="$LOCAL/$MS/Windows/History"; DESC="Temporary Internet Files"; add_to_wipe
 NAME="$LOCAL/$MS/Windows/$TIF"; DESC="Temporary Internet Files"; add_to_wipe
 NAME="$LOCAL/$MS/Windows/WebCache*"; DESC="Temporary Internet Files"; add_to_wipe
+NAME="$LOCAL/$MS/Windows/WebCacheLock.dat"; DESC="Temporary Internet Files"; add_to_delete
 
 NAME="$LOCAL/$MS/Windows/WER"; DESC="Windows Error Reporting"; add_to_wipe
 NAME="$LOCAL/$MS/Windows NT/NTBackup"; DESC="NTBackup data"; add_to_wipe
