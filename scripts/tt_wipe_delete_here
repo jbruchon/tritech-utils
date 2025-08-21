@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Overwrite all files with zeroes, then delete, recursively.
+
+find -type f -exec stat -c '%s:%n' '{}' + | while read -r X
+#find -type f -exec stat -c '%s:%n' '{}' \; | while read -r X
+	do echo "$X"
+	SZ="${X/:*/}"
+	FN="${X/*:/}"
+	dd if=/dev/zero of="$FN" bs=4096 count=$((SZ / 4096 + 1)) conv=notrunc 2>/dev/null
+	rm -f "$FN"
+done
