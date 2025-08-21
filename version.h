@@ -1,4 +1,4 @@
 /* tritech-utils version information */
 
-#define TRITECH_UTILS_VER "1.18"
-#define TRITECH_UTILS_DATE "2023-06-28"
+#define TRITECH_UTILS_VER "1.19"
+#define TRITECH_UTILS_DATE "2025-08-21"
