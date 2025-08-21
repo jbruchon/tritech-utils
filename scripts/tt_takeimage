@@ -25,6 +25,8 @@ DEV="/dev/$(cat $TF)"
 rm -f $TF; unset TF
 test ! -e $DEV && echo "$DEV does not exist." && exit 1
 
+BS=$(blockdev --getss $DEV || echo 512)
+
 echo -n "Zeroing empty space on partitions: "
 for X in ${DEV}? ${DEV}p?
 	do DEVX=$(basename $X)
@@ -43,5 +45,5 @@ ENDSECT=$(fdisk -lu $DEV | grep -v 'does not end on cylinder boundary' | tail -n
 echo -e "\nImaging $CWHT$ENDSECT$COFF sectors ($(expr $ENDSECT / 2048) MB) from $CWHT$DEV$COFF"
 echo "to $CWHT$IMGNAME$COFF"
 ERR=0
-dd if=$DEV bs=512 count=$ENDSECT | pv -pterab -s $(expr $ENDSECT \* 512) | $LZOP -1 > "$IMGNAME" || ERR=1
+dd if=$DEV bs=$BS count=$ENDSECT | pv -pterab -s $(expr $ENDSECT \* 512) | $LZOP -1 > "$IMGNAME" || ERR=1
 test $ERR = 1 && echo "Error occurred, removing $IMGNAME" && rm -f $IMGNAME && exit 1
