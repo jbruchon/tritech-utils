@@ -24,12 +24,12 @@ RID_PATH="Microsoft/Windows NT/CurrentVersion/ReleaseId.sz"
 
 do_windows_folder_detection
 REGSW=__NONE__
-REGDIR="$WINDIR/$SYS32/$CONFIG"
+REGDIR="$WINDOWSDIR/$SYS32/$CONFIG"
 for X in $REGDIR/SOFTWARE $REGDIR/software $REGDIR/Software
 	do test -e "$X" && REGSW="$X"
 done
 PRODSPEC=__NONE__
-for X in $WINDIR/$SYS32/PRODSPEC.INI $WINDIR/$SYS32/prodspec.ini $WINDIR/$SYS32/Prodspec.ini
+for X in $WINDOWSDIR/$SYS32/PRODSPEC.INI $WINDOWSDIR/$SYS32/prodspec.ini $WINDOWSDIR/$SYS32/Prodspec.ini
 	do test -e "$X" && PRODSPEC="$X"
 done
 test "$REGSW" = "__NONE__" && echo "Cannot find SOFTWARE hive." >&2 && exit 3

@@ -141,7 +141,7 @@ tt__read_memory_size () {
 
 do_windows_folder_detection () {
 	# Set variables that are used for folder detection
-	export WINDIR=$N
+	export WINDOWSDIR=$N
 	export WINTEMP=$N
 	export SYS32=$N
 	export SYS64=$N
@@ -155,37 +155,37 @@ do_windows_folder_detection () {
 	export REG_SYS=$N
 
 	for X in WINDOWS Windows windows WINXP WinXP winxp WINNT WinNT winnt
-		do test -d $X && export WINDIR=$X; done
+		do test -d $X && export WINDOWSDIR=$X; done
 
-	for X in $WINDIR/Temp $WINDIR/TEMP $WINDIR/temp
+	for X in $WINDOWSDIR/Temp $WINDOWSDIR/TEMP $WINDOWSDIR/temp
 		do test -d $X && export WINTEMP=$X; done
 
 	for X in system32 System32 SYSTEM32
-		do test -d $WINDIR/$X && export SYS32=$X; done
+		do test -d $WINDOWSDIR/$X && export SYS32=$X; done
 
 	for X in syswow64 SysWOW64 SYSWOW64
-		do test -d $WINDIR/$X && export SYS64=$X; done
+		do test -d $WINDOWSDIR/$X && export SYS64=$X; done
 
 	for X in config Config CONFIG
-		do test -d $WINDIR/$SYS32/$X && export CONFIG=$X; done
+		do test -d $WINDOWSDIR/$SYS32/$X && export CONFIG=$X; done
 
 	for X in sam Sam SAM
-		do test -e $WINDIR/$SYS32/$CONFIG/$X && export REG_SAM=$X; done
+		do test -e $WINDOWSDIR/$SYS32/$CONFIG/$X && export REG_SAM=$X; done
 
 	for X in software Software SOFTWARE
-		do test -e $WINDIR/$SYS32/$CONFIG/$X && export REG_SW=$X; done
+		do test -e $WINDOWSDIR/$SYS32/$CONFIG/$X && export REG_SW=$X; done
 
 	for X in system System SYSTEM
-		do test -e $WINDIR/$SYS32/$CONFIG/$X && export REG_SYS=$X; done
+		do test -e $WINDOWSDIR/$SYS32/$CONFIG/$X && export REG_SYS=$X; done
 
 	for X in systemprofile SYSTEMPROFILE SystemProfile
-		do test -d $WINDIR/$SYS32/$CONFIG/$X && export SYSPROF=$X; done
+		do test -d $WINDOWSDIR/$SYS32/$CONFIG/$X && export SYSPROF=$X; done
 
 	for X in HAL.DLL hal.dll Hal.dll hal.DLL HAL.dll
-		do test -e $WINDIR/$SYS32/$X && export HALDLL=$X; done
+		do test -e $WINDOWSDIR/$SYS32/$X && export HALDLL=$X; done
 
 	for X in ntoskrnl.exe NTOSKRNL.EXE ntoskrnl.EXE NTOSKRNL.exe
-		do test -e $WINDIR/$SYS32/$X && export KERNEL=$X; done
+		do test -e $WINDOWSDIR/$SYS32/$X && export KERNEL=$X; done
 
 	# Scan for 2000/XP or Vista/7
 	test -d "$XPDOCS" && OS_CLASS="2000/XP" && export V7=1

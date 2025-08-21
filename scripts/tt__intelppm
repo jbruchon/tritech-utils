@@ -11,7 +11,7 @@ do_windows_folder_detection
 test -e bootmgr && echo "Vista/7 detected; not touching intelppm.sys"
 test -e ProgramData && echo "Vista/7 detected; not touching intelppm.sys"
 
-EXP=$(tt__get_win_pe_version $WINDIR/explorer.exe)
+EXP=$(tt__get_win_pe_version $WINDOWSDIR/explorer.exe)
 if ! echo "$EXP" | grep -q "xpsp"
 	then echo "Vista/7 detected; not touching intelppm.sys"
 	exit
@@ -19,7 +19,7 @@ fi
 
 if ! grep -q "Intel" /proc/cpuinfo
   then echo "${CYEL}Deleting intelppm.sys. No Intel CPU installed.$COFF"
-  find $WINDIR/$SYS32 -name intelppm.sys -exec mv '{}' '{}.bak' \;
+  find $WINDOWSDIR/$SYS32 -name intelppm.sys -exec mv '{}' '{}.bak' \;
   else echo "${CGRN}An Intel CPU was detected. Not deleting intelppm.sys.$COFF"
 fi
 

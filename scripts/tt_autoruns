@@ -249,7 +249,7 @@ WINVER="$(tt_winver -A)"; echo "$CGRN$WINVER$COFF"
 
 if [ "$REG_SYS" != "__NONE__" ]
 	then
-	mount.winregfs -o ro "$WINDIR/$SYS32/$CONFIG/$REG_SYS" $REGMTPT
+	mount.winregfs -o ro "$WINDOWSDIR/$SYS32/$CONFIG/$REG_SYS" $REGMTPT
 	# Find CurrentControlSet
 	CCS="ControlSet$(sed 's/^00000//' < "$REGMTPT/Select/Current.dw")"
 	if [ ! -e "$REGMTPT/$CCS" ]

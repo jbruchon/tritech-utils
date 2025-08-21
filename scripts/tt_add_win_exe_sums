@@ -10,10 +10,10 @@ SUMFILE=$ROOT/win.sha256sums
 TMPFILE=$(mktemp)
 
 do_windows_folder_detection
-test "$WINDIR" = "__NONE__" && echo "No Windows folder found." && exit 1
+test "$WINDOWSDIR" = "__NONE__" && echo "No Windows folder found." && exit 1
 
 for EXT in exe ocx dll
-	do find $WINDIR -name \*.${EXT} -type f >> $TMPFILE
+	do find $WINDOWSDIR -name \*.${EXT} -type f >> $TMPFILE
 done
 while read LINE
 	do SUM=$(sha256deep -b "$LINE")

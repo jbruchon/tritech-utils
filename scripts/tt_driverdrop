@@ -68,7 +68,7 @@ rotate_progress () {
 
 get_host_winver_flags () {
 	do_windows_folder_detection
-	INFDIR=__NONE__; for X in inf Inf INF; do test -d $WINDIR/$X && INFDIR=$WINDIR/$X; done
+	INFDIR=__NONE__; for X in inf Inf INF; do test -d $WINDOWSDIR/$X && INFDIR=$WINDOWSDIR/$X; done
 	WINDBFILE=$INFDIR/devicedb.txt
 	WINVER=$(tt_winver)
 	W2K=.; XP32=.; V32=.; W732=.; W832=.; W8132=.; W1032=.

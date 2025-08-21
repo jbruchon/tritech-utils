@@ -19,7 +19,7 @@ if [ ! "$HALDLL" = "__NONE__" ]
   then echo -n "${CGRN}HAL...$COFF"
   if [ ! "$KERNEL" = "__NONE__" ]
     then echo -n "${CGRN}kernel...$COFF"
-    echo "${CWHT}using $WINDIR/$SYS32"
+    echo "${CWHT}using $WINDOWSDIR/$SYS32"
     else echo "${CRED}no kernel!$COFF"
   fi
   else echo "${CRED}no HAL found!$COFF"; exit 1
@@ -67,10 +67,10 @@ esac
 
 echo "${CCYA}using $HAL/$KRNL from $HALPATH$COFF"
 
-mv -f $WINDIR/$SYS32/$HALDLL $WINDIR/$SYS32/hal.dll 2>/dev/null
-mv -f $WINDIR/$SYS32/$KERNEL $WINDIR/$SYS32/ntoskrnl.exe 2>/dev/null
-cp $HALPATH/$HAL $WINDIR/$SYS32/hal.dll || echo "${CRED}HAL copy FAILED!$COFF"
-cp $HALPATH/$KRNL $WINDIR/$SYS32/ntoskrnl.exe || echo "${CRED}Kernel copy FAILED!$COFF"
+mv -f $WINDOWSDIR/$SYS32/$HALDLL $WINDOWSDIR/$SYS32/hal.dll 2>/dev/null
+mv -f $WINDOWSDIR/$SYS32/$KERNEL $WINDOWSDIR/$SYS32/ntoskrnl.exe 2>/dev/null
+cp $HALPATH/$HAL $WINDOWSDIR/$SYS32/hal.dll || echo "${CRED}HAL copy FAILED!$COFF"
+cp $HALPATH/$KRNL $WINDOWSDIR/$SYS32/ntoskrnl.exe || echo "${CRED}Kernel copy FAILED!$COFF"
 
 echo "${CGRN}HAL and kernel installed.$COFF"
 

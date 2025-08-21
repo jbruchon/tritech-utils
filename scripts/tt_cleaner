@@ -163,7 +163,7 @@ test "$MSG" = "1" && echo -n "Cleaning: "
 if [ "$MSG" = "2" ]
 	then echo "${CWHT}Tritech Service System Cleaner $CCYA$VER $CPUR($VERDATE)$COFF"
 	echo "${CWHT}OS detected: $OSYS$COFF"
-	test $V7 -gt 0 && test "$WINDIR" = "__NONE__" && \
+	test $V7 -gt 0 && test "$WINDOWSDIR" = "__NONE__" && \
 		echo "${CYEL}NOTICE: ${CWHT}No Windows folder detected$COFF"
 	test "$UPF" = "0" && echo "${CYEL}NOTICE: ${CWHT}No user profile root folder detected$COFF"
 fi
@@ -180,7 +180,7 @@ escape_regex () {
 
 # Check the name being added against a list of protected paths
 test_protected () {
-	for Q in $P $LOCAL $ROAM $XPDOCS $WINDIR $PF \
+	for Q in $P $LOCAL $ROAM $XPDOCS $WINDOWSDIR $PF \
 	$V7DOCS $V7LL $PD $XPLS $LOCAL/Temp/smtmp $LOCAL/temp/smtmp
 		do
 		test "$ADD" = "$Q" && echo "$ADD = $Q, ABORTING." && exit 1
@@ -391,21 +391,21 @@ fi
 if ! [ "$SYS32" = "__NONE__" ]; then
 	REWRITE0=( "${REWRITE0[@]}" "$P" )
 	REWRITE1=( "${REWRITE1[@]}" "$P" )
-	REWRITE2=( "${REWRITE2[@]}" "$WINDIR/$SYS32/$CONFIG/$SYSPROF" )
+	REWRITE2=( "${REWRITE2[@]}" "$WINDOWSDIR/$SYS32/$CONFIG/$SYSPROF" )
 fi
 
 # Windows Vista/7 use ServiceProfiles folders for service profiles
-if [ -e "$WINDIR/ServiceProfiles" ]; then
+if [ -e "$WINDOWSDIR/ServiceProfiles" ]; then
 	REWRITE0=( "${REWRITE0[@]}" "^$P" )
 	REWRITE1=( "${REWRITE1[@]}" "^$P" )
-	REWRITE2=( "${REWRITE2[@]}" "$WINDIR/ServiceProfiles/*" )
+	REWRITE2=( "${REWRITE2[@]}" "$WINDOWSDIR/ServiceProfiles/*" )
 fi
 
 # For 64-bit Windows, copy System32 operations to SysWOW64
 if ! [ "$SYS64" = "__NONE__" ]; then
-	REWRITE0=( "${REWRITE0[@]}" "$WINDIR/$SYS32" )
-	REWRITE1=( "${REWRITE1[@]}" "$WINDIR/$SYS32" )
-	REWRITE2=( "${REWRITE2[@]}" "$WINDIR/$SYS64" )
+	REWRITE0=( "${REWRITE0[@]}" "$WINDOWSDIR/$SYS32" )
+	REWRITE1=( "${REWRITE1[@]}" "$WINDOWSDIR/$SYS32" )
+	REWRITE2=( "${REWRITE2[@]}" "$WINDOWSDIR/$SYS64" )
 fi
 
 # Vista virtualizes Program Files to VirtualStore
@@ -422,10 +422,10 @@ if ! [ "$SYS64" = "__NONE__" ]; then
 	REWRITE2=( "${REWRITE2[@]}" "$PF (x86)" )
 fi
 
-if ! [ "$WINDIR" = "__NONE__" ]; then
-	REWRITE0=( "${REWRITE0[@]}" "$WINDIR" )
-	REWRITE1=( "${REWRITE1[@]}" "$WINDIR" )
-	REWRITE2=( "${REWRITE2[@]}" "$LOCAL/$VS/$WINDIR" )
+if ! [ "$WINDOWSDIR" = "__NONE__" ]; then
+	REWRITE0=( "${REWRITE0[@]}" "$WINDOWSDIR" )
+	REWRITE1=( "${REWRITE1[@]}" "$WINDOWSDIR" )
+	REWRITE2=( "${REWRITE2[@]}" "$LOCAL/$VS/$WINDOWSDIR" )
 fi
 
 if [ "$V7" = "2" ]; then
@@ -1248,30 +1248,30 @@ NAME="$V7DOCS/$V7SAMPLE"; DESC="Sample media files"; add_to_wipe
 # General cleaning
 
 # If no Windows folder was detected, don't try to clean within it
-if [ ! "$WINDIR" = "__NONE__" ]
+if [ ! "$WINDOWSDIR" = "__NONE__" ]
 	then
-	NAME="$WINDIR/\$NtUninstall*\$"; DESC="Windows Update"; add_to_delete
-	NAME="$WINDIR/SoftwareDistribution/Download"; DESC="Windows Update"; add_to_wipe
-	NAME="$WINDIR/inf/*.PNF"; DESC="Windows temp files"; add_to_delete
+	NAME="$WINDOWSDIR/\$NtUninstall*\$"; DESC="Windows Update"; add_to_delete
+	NAME="$WINDOWSDIR/SoftwareDistribution/Download"; DESC="Windows Update"; add_to_wipe
+	NAME="$WINDOWSDIR/inf/*.PNF"; DESC="Windows temp files"; add_to_delete
 	NAME="$WINTEMP"; DESC="Windows temp files"; add_to_wipe
-	NAME="$WINDIR/assembly/*/Temp"; DESC="Windows temp files"; add_to_wipe
-	NAME="$WINDIR/SxsCaPendDel"; DESC="Windows temp files"; add_to_delete
-	NAME="$WINDIR/*.tmp"; DESC="Windows temp files"; add_to_delete
-	NAME="$WINDIR/$SYS32/*.tmp"; DESC="Windows temp files"; add_to_delete
-	NAME="$WINDIR/$SYS32/temppf.sys"; DESC="Windows temp files"; add_to_delete
-	NAME="$WINDIR/LiveKernelReports"; DESC="Windows memory dumps"; add_to_wipe
-	NAME="$WINDIR/Minidump"; DESC="Windows memory dumps"; add_to_wipe
-	NAME="$WINDIR/MiniDump"; DESC="Windows memory dumps"; add_to_wipe
-	NAME="$WINDIR/MEMORY.DMP"; DESC="Windows memory dumps"; add_to_delete
-	NAME="$WINDIR/Prefetch"; DESC="Windows prefetcher"; add_to_wipe
-	NAME="$WINDIR/$SYS32/FNTCACHE.DAT"; DESC="Windows font cache"; add_to_delete
-	NAME="$WINDIR/pchealth/helpctr/OfflineCache/*/*.query"; DESC="Windows Help offline cache"; add_to_delete
+	NAME="$WINDOWSDIR/assembly/*/Temp"; DESC="Windows temp files"; add_to_wipe
+	NAME="$WINDOWSDIR/SxsCaPendDel"; DESC="Windows temp files"; add_to_delete
+	NAME="$WINDOWSDIR/*.tmp"; DESC="Windows temp files"; add_to_delete
+	NAME="$WINDOWSDIR/$SYS32/*.tmp"; DESC="Windows temp files"; add_to_delete
+	NAME="$WINDOWSDIR/$SYS32/temppf.sys"; DESC="Windows temp files"; add_to_delete
+	NAME="$WINDOWSDIR/LiveKernelReports"; DESC="Windows memory dumps"; add_to_wipe
+	NAME="$WINDOWSDIR/Minidump"; DESC="Windows memory dumps"; add_to_wipe
+	NAME="$WINDOWSDIR/MiniDump"; DESC="Windows memory dumps"; add_to_wipe
+	NAME="$WINDOWSDIR/MEMORY.DMP"; DESC="Windows memory dumps"; add_to_delete
+	NAME="$WINDOWSDIR/Prefetch"; DESC="Windows prefetcher"; add_to_wipe
+	NAME="$WINDOWSDIR/$SYS32/FNTCACHE.DAT"; DESC="Windows font cache"; add_to_delete
+	NAME="$WINDOWSDIR/pchealth/helpctr/OfflineCache/*/*.query"; DESC="Windows Help offline cache"; add_to_delete
 
 
 	# LOTS of Windows log files to delete
 	for X in \
 	Logs 'ModemLog*.txt' Panther security/logs pchealth/helpctr/Logs
-		do NAME="$WINDIR/${X}"; DESC="Windows logs"; add_to_wipe
+		do NAME="$WINDOWSDIR/${X}"; DESC="Windows logs"; add_to_wipe
 	done
 
 	for X in \
@@ -1289,11 +1289,11 @@ if [ ! "$WINDIR" = "__NONE__" ]
 	$SYS32/'LogFiles/*/*.etl.*' $SYS32/'Macromed/Flash/*.log' \
 	$SYS32/MsDtc/Trace/dtctrace.log $SYS32/'wbem/Logs/*.log' \
 	$SYS32/'wbem/Logs/*.lo_' ;
-		do NAME="$WINDIR/${X}"; DESC="Windows logs"; add_to_delete
+		do NAME="$WINDOWSDIR/${X}"; DESC="Windows logs"; add_to_delete
 	done
 
-	NAME="$WINDIR/$SYS32/DriverStore/Temp"; DESC="DriverStore temp files"; add_to_wipe
-	NAME="$WINDIR/winsxs/Temp"; DESC="WinSxS temporary files"; add_to_wipe
+	NAME="$WINDOWSDIR/$SYS32/DriverStore/Temp"; DESC="DriverStore temp files"; add_to_wipe
+	NAME="$WINDOWSDIR/winsxs/Temp"; DESC="WinSxS temporary files"; add_to_wipe
 fi
 
 for X in \
