@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# This scans everything under /mnt and picks all the likely BASE candidates,
+# specifically those with a disk images folder present, setting BASE to the
+# last one discovered. It must be run with the dot command, otherwise it will
+# only list off the BASEs found and exit.
+
+#set
+echo "NOTICE: Run this with a dot command to auto-set BASE: . tt_find_base"
+for X in /mnt/*
+	do [ -d "$X/source/hd_images" ] && export BASE="$X" && echo "BASE found at $X"
+done
