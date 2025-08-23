@@ -88,7 +88,7 @@ install: tritech-utils manual
 	install -D -o root -g root -m 0755 scripts/tt_cputemp $(DESTDIR)/$(bindir)/tt_cputemp
 	install -D -o root -g root -m 0755 scripts/tt_drivetest $(DESTDIR)/$(bindir)/tt_drivetest
 	install -D -o root -g root -m 0755 scripts/tt_driverdrop $(DESTDIR)/$(bindir)/tt_driverdrop
-	install -D -o root -g root -m 0755 scripts/tt_drop_genuineticket $(DESTDIR)/$(bindir)/tt_drop_genuineticket
+	install -D -o root -g root -m 0755 scripts/tt_find_base $(DESTDIR)/$(bindir)/tt_find_base
 	install -D -o root -g root -m 0755 scripts/tt_find_executables $(DESTDIR)/$(bindir)/tt_find_executables
 	install -D -o root -g root -m 0755 scripts/tt_fsinfo $(DESTDIR)/$(bindir)/tt_fsinfo
 	install -D -o root -g root -m 0755 scripts/tt_geometry $(DESTDIR)/$(bindir)/tt_geometry
@@ -108,6 +108,7 @@ install: tritech-utils manual
 	install -D -o root -g root -m 0755 scripts/tt_takeimage $(DESTDIR)/$(bindir)/tt_takeimage
 	install -D -o root -g root -m 0755 scripts/tt_trim_entire_ssd $(DESTDIR)/$(bindir)/tt_trim_entire_ssd
 	install -D -o root -g root -m 0755 scripts/tt_winver $(DESTDIR)/$(bindir)/tt_winver
+	install -D -o root -g root -m 0755 scripts/tt_wipe_delete_here $(DESTDIR)/$(bindir)/tt_wipe_delete_here
 	install -D -o root -g root -m 0755 scripts/tt_zero_image $(DESTDIR)/$(bindir)/tt_zero_image
 	mkdir -p $(DESTDIR)/$(datarootdir)/tritech-utils
 	cp -a win_svc_templates $(DESTDIR)/$(datarootdir)/tritech-utils/
